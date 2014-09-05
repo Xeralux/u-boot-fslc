@@ -24,6 +24,8 @@
 #include <ipu_pixfmt.h>
 #include <asm/io.h>
 #include <asm/arch/sys_proto.h>
+#include <watchdog.h>
+
 DECLARE_GLOBAL_DATA_PTR;
 
 #define UART_PAD_CTRL  (PAD_CTL_PUS_100K_UP |			\
@@ -404,6 +406,10 @@ int board_early_init_f(void)
 	setup_iomux_uart();
 #if defined(CONFIG_VIDEO_IPUV3)
 	setup_display();
+#endif
+
+#if defined(CONFIG_HW_WATCHDOG)
+        hw_watchdog_init();
 #endif
 
 	return 0;

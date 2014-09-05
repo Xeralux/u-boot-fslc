@@ -264,4 +264,8 @@
 /* Framebuffer */
 #define CONFIG_SYS_CONSOLE_IS_IN_ENV
 
+/*watchdog*/
+#define CONFIG_HW_WATCHDOG
+#define CONFIG_IMX_WATCHDOG
+
 #endif                         /* __MX6QMEDIANODE_CONFIG_H */
