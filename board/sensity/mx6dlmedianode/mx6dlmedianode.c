@@ -25,6 +25,8 @@
 #include <asm/io.h>
 #include <asm/arch/sys_proto.h>
 #include <watchdog.h>
+#include <asm/imx-common/mxc_i2c.h>
+#include <i2c.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -38,6 +40,11 @@ DECLARE_GLOBAL_DATA_PTR;
 
 #define ENET_PAD_CTRL  (PAD_CTL_PUS_100K_UP |			\
 	PAD_CTL_SPEED_MED | PAD_CTL_DSE_40ohm | PAD_CTL_HYS)
+
+#define I2C_PAD_CTRL    (PAD_CTL_PUS_100K_UP |                  \
+        PAD_CTL_SPEED_MED | PAD_CTL_DSE_40ohm | PAD_CTL_HYS |   \
+        PAD_CTL_ODE | PAD_CTL_SRE_FAST)
+#define PC MUX_PAD_CTRL(I2C_PAD_CTRL)
 
 int dram_init(void)
 {
@@ -69,6 +76,19 @@ iomux_v3_cfg_t const enet_pads[] = {
 	MX6_PAD_RGMII_RX_CTL__RGMII_RX_CTL	| MUX_PAD_CTRL(ENET_PAD_CTRL),
 	/* AR8031 PHY Reset */
 	MX6_PAD_ENET_CRS_DV__GPIO1_IO25		| MUX_PAD_CTRL(NO_PAD_CTRL),
+};
+
+struct i2c_pads_info i2c_pad_info1 = {
+        .scl = {
+                .i2c_mode = MX6_PAD_CSI0_DAT9__I2C1_SCL | PC,
+                .gpio_mode = MX6_PAD_CSI0_DAT9__GPIO5_IO27 | PC,
+                .gp = IMX_GPIO_NR(5, 27)
+        },
+        .sda = {
+                .i2c_mode = MX6_PAD_CSI0_DAT8__I2C1_SDA | PC,
+                .gpio_mode = MX6_PAD_CSI0_DAT8__GPIO5_IO26 | PC,
+                .gp = IMX_GPIO_NR(5, 26)
+        }
 };
 
 static void setup_iomux_enet(void)
@@ -107,6 +127,32 @@ iomux_v3_cfg_t const usdhc4_pads[] = {
 static void setup_iomux_uart(void)
 {
 	imx_iomux_v3_setup_multiple_pads(uart1_pads, ARRAY_SIZE(uart1_pads));
+}
+
+#define SRC_SRSR_IPP_RESET_B_OFFSET 0
+#define SRC_SRSR_IPP_RESET_B_MASK (1<<SRC_SRSR_IPP_RESET_B_OFFSET)
+static void force_por(void)
+{
+  int ret;
+  u32 cause;
+  struct src *src_regs = (struct src *)SRC_BASE_ADDR;
+  
+  cause = readl(&src_regs->srsr);
+  /*TODO make conditional on SRC_GPR10 somehow*/
+  printf("Reset source: %05d\n", cause);
+  if(cause & SRC_SRSR_IPP_RESET_B_MASK) {
+    writel(cause, &src_regs->srsr);
+    return;
+  }
+  printf("Sending command for POR...\n");
+  ret = i2c_set_bus_num(0);
+  if(ret < 0) {
+    printf("Setting i2c bus failed");
+    return;
+  }
+  ret = i2c_write(0x3c, 0x1e, 1, NULL, 0);
+  printf("Failed to reset system!\n");
+  writel(cause, &src_regs->srsr);
 }
 
 #ifdef CONFIG_FSL_ESDHC
@@ -419,7 +465,8 @@ int board_init(void)
 {
 	/* address of boot parameters */
 	gd->bd->bi_boot_params = PHYS_SDRAM + 0x100;
-
+	setup_i2c(0, CONFIG_SYS_I2C_SPEED, 0x7f, &i2c_pad_info1);
+	force_por();
 	return 0;
 }
 

@@ -268,4 +268,9 @@
 #define CONFIG_HW_WATCHDOG
 #define CONFIG_IMX_WATCHDOG
 
+/*i2c*/
+#define CONFIG_SYS_I2C
+#define CONFIG_SYS_I2C_MXC
+#define CONFIG_SYS_I2C_SPEED		100000
+
 #endif                         /* __MX6QMEDIANODE_CONFIG_H */
