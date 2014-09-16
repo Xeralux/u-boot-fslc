@@ -618,6 +618,7 @@ int do_mem_loopw (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 #endif /* CONFIG_LOOPW */
 
 #ifdef CONFIG_CMD_MEMTEST
+#define PROGRESS_MASK ((0x400000/sizeof(addr[0]))-1)
 static ulong mem_test_alt(vu_long *buf, ulong start_addr, ulong end_addr,
 			  vu_long *dummy)
 {
@@ -662,6 +663,7 @@ static ulong mem_test_alt(vu_long *buf, ulong start_addr, ulong end_addr,
 	 * pattern and ~pattern).
 	 */
 	addr = buf;
+	printf("Running data line test...\n");
 	for (j = 0; j < sizeof(bitpattern) / sizeof(bitpattern[0]); j++) {
 		val = bitpattern[j];
 		for (; val != 0; val <<= 1) {
@@ -727,6 +729,7 @@ static ulong mem_test_alt(vu_long *buf, ulong start_addr, ulong end_addr,
 	pattern = (vu_long) 0xaaaaaaaa;
 	anti_pattern = (vu_long) 0x55555555;
 
+	printf("Running address line test...\n");
 	debug("%s:%d: length = 0x%.8lx\n", __func__, __LINE__, num_words);
 	/*
 	 * Write the default pattern at each of the
@@ -790,12 +793,17 @@ static ulong mem_test_alt(vu_long *buf, ulong start_addr, ulong end_addr,
 	 */
 	num_words++;
 
+	printf("Running memory integrity test...\n");
+
 	/*
 	 * Fill memory with a known pattern.
 	 */
 	for (pattern = 1, offset = 0; offset < num_words; pattern++, offset++) {
 		WATCHDOG_RESET();
 		addr[offset] = pattern;
+		if((offset & PROGRESS_MASK) == 0) {
+			printf("Filling 0x%x\r", addr + offset);
+		}
 	}
 
 	/*
@@ -815,6 +823,9 @@ static ulong mem_test_alt(vu_long *buf, ulong start_addr, ulong end_addr,
 
 		anti_pattern = ~pattern;
 		addr[offset] = anti_pattern;
+		if((offset & PROGRESS_MASK) == 0) {
+			printf("Testing 0x%x\r", addr + offset);
+		}
 	}
 
 	/*
@@ -833,8 +844,11 @@ static ulong mem_test_alt(vu_long *buf, ulong start_addr, ulong end_addr,
 				return -1;
 		}
 		addr[offset] = 0;
+		if((offset & PROGRESS_MASK) == 0) {
+			printf("Testing 0x%x\r", addr + offset);
+		}
 	}
-
+	printf("\n");
 	return 0;
 }
 
