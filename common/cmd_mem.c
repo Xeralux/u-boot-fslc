@@ -802,7 +802,7 @@ static ulong mem_test_alt(vu_long *buf, ulong start_addr, ulong end_addr,
 		WATCHDOG_RESET();
 		addr[offset] = pattern;
 		if((offset & PROGRESS_MASK) == 0) {
-			printf("Filling 0x%x\r", addr + offset);
+		  printf("Filling 0x%x\r", (size_t)(addr + offset));
 		}
 	}
 
@@ -824,7 +824,7 @@ static ulong mem_test_alt(vu_long *buf, ulong start_addr, ulong end_addr,
 		anti_pattern = ~pattern;
 		addr[offset] = anti_pattern;
 		if((offset & PROGRESS_MASK) == 0) {
-			printf("Testing 0x%x\r", addr + offset);
+			printf("Testing  0x%x\r", (size_t)(addr + offset));
 		}
 	}
 
@@ -845,7 +845,7 @@ static ulong mem_test_alt(vu_long *buf, ulong start_addr, ulong end_addr,
 		}
 		addr[offset] = 0;
 		if((offset & PROGRESS_MASK) == 0) {
-			printf("Testing 0x%x\r", addr + offset);
+			printf("Testing  0x%x\r", (size_t)(addr + offset));
 		}
 	}
 	printf("\n");
