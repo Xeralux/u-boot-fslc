@@ -40,7 +40,7 @@
 	_min1 < _min2 ? _min1 : _min2; })
 
 struct envdev_s {
-	char devname[16];		/* Device name */
+	char devname[256];		/* Device name */
 	ulong devoff;			/* Device offset */
 	ulong env_size;			/* environment size */
 	ulong erase_size;		/* device erase size */
@@ -1294,7 +1294,8 @@ static int get_config (char *fname)
 	FILE *fp;
 	int i = 0;
 	int rc;
-	char dump[128];
+	char dump[512];
+	char *devname;
 
 	fp = fopen (fname, "r");
 	if (fp == NULL)
@@ -1305,8 +1306,8 @@ static int get_config (char *fname)
 		if (dump[0] == '#')
 			continue;
 
-		rc = sscanf (dump, "%s %lx %lx %lx %lx",
-			     DEVNAME (i),
+		rc = sscanf (dump, "%ms %lx %lx %lx %lx",
+		             &devname,
 			     &DEVOFFSET (i),
 			     &ENVSIZE (i),
 			     &DEVESIZE (i),
@@ -1314,6 +1315,9 @@ static int get_config (char *fname)
 
 		if (rc < 3)
 			continue;
+
+		strncpy (DEVNAME(i), devname, sizeof (DEVNAME(i)) - 1);
+		free (devname);
 
 		if (rc < 4)
 			/* Assume the erase size is the same as the env-size */
