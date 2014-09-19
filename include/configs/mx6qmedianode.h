@@ -277,4 +277,6 @@
 //in case < becomes <=
 #define CONFIG_SYS_MEMTEST_SCRATCH (CONFIG_SYS_MEMTEST_END + sizeof(vu_long))
 
+#define CONFIG_TEMPERATURE
+
 #endif                         /* __MX6QMEDIANODE_CONFIG_H */

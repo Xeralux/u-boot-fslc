@@ -220,6 +220,80 @@ int board_mmc_init(bd_t *bis)
 }
 #endif
 
+#if defined(CONFIG_TEMPERATURE)
+
+#include <div64.h>
+
+#define REG_SET		0x4
+#define REG_CLR		0x8
+#define REG_TOG		0xc
+
+#define TEMPMON_TEMPSENSE0		0x20C8180
+
+#define TEMPSENSE0_TEMP_CNT_SHIFT	8
+#define TEMPSENSE0_TEMP_CNT_MASK	(0xfff << TEMPSENSE0_TEMP_CNT_SHIFT)
+#define TEMPSENSE0_FINISHED		(1 << 2)
+#define TEMPSENSE0_MEASURE_TEMP		(1 << 1)
+#define TEMPSENSE0_POWER_DOWN		(1 << 0)
+
+#define TEMPMON_TEMPSENSE1		0x20C8190
+
+#define TEMPSENSE1_MEASURE_FREQ		0xffff
+
+#define MISC0 0x20C8150
+
+
+#define MISC0_REFTOP_SELBIASOFF		(1 << 3)
+
+#define OCOTP_ANA1 0x21BC4E0
+#define FACTOR0				10000000
+#define FACTOR1				15976
+#define FACTOR2				4297157
+
+
+u32 c1, c2;
+
+void print_temperature(void)
+{
+	u32 val;
+	unsigned int n_meas;
+	unsigned long temp;
+	writel(TEMPSENSE0_POWER_DOWN,(u32*)(TEMPMON_TEMPSENSE0 + REG_CLR));
+	writel(TEMPSENSE0_MEASURE_TEMP,(u32*)(TEMPMON_TEMPSENSE0 + REG_SET));
+	udelay(30);
+	val = readl((u32*)(TEMPMON_TEMPSENSE0));
+	writel(TEMPSENSE0_MEASURE_TEMP,(u32*)(TEMPMON_TEMPSENSE0 + REG_CLR));
+	writel(TEMPSENSE0_POWER_DOWN,(u32*)(TEMPMON_TEMPSENSE0 + REG_SET));
+
+	n_meas = (val & TEMPSENSE0_TEMP_CNT_MASK) >> TEMPSENSE0_TEMP_CNT_SHIFT;
+	temp = c2 - n_meas * c1;
+
+	printf("Temperature: %ld mC\n", (long)temp);
+}
+
+void enable_temperature(void)
+{
+	int t1, n1;
+	u32 val;
+	u64 temp64;
+
+	writel(TEMPSENSE0_POWER_DOWN,   (u32*)(TEMPMON_TEMPSENSE0 + REG_CLR));
+	writel(TEMPSENSE0_MEASURE_TEMP, (u32*)(TEMPMON_TEMPSENSE0 + REG_CLR));
+	writel(TEMPSENSE1_MEASURE_FREQ, (u32*)(TEMPMON_TEMPSENSE1 + REG_CLR));
+	writel(MISC0_REFTOP_SELBIASOFF, (u32*)(MISC0 + REG_SET));
+	writel(TEMPSENSE0_POWER_DOWN, (u32*)(TEMPMON_TEMPSENSE0 + REG_SET));
+
+	val = readl((u32*)OCOTP_ANA1);
+	n1 = val >> 20;
+	t1 = 25; /* t1 always 25C */
+	temp64 = FACTOR0;
+	temp64 *= 1000;
+	do_div(temp64, FACTOR1 * n1 - FACTOR2);
+	c1 = temp64;
+	c2 = n1 * c1 + 1000 * t1;
+}
+#endif
+
 int mx6_rgmii_rework(struct phy_device *phydev)
 {
 	unsigned short val;
@@ -469,6 +543,7 @@ int board_init(void)
 	gd->bd->bi_boot_params = PHYS_SDRAM + 0x100;
 	setup_i2c(0, CONFIG_SYS_I2C_SPEED, 0x7f, &i2c_pad_info1);
 	force_por();
+	enable_temperature();
 	return 0;
 }
 

@@ -643,6 +643,10 @@ static ulong mem_test_alt(vu_long *buf, ulong start_addr, ulong end_addr,
 		0xaaaaaaaa,	/* alternating 1/0 */
 	};
 
+#if defined(CONFIG_TEMPERATURE)
+	void print_temperature(void);
+	print_temperature();
+#endif
 	num_words = (end_addr - start_addr) / sizeof(vu_long);
 
 	/*
