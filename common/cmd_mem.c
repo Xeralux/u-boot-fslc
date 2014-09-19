@@ -679,6 +679,9 @@ static ulong mem_test_alt(vu_long *buf, ulong start_addr, ulong end_addr,
 					"expected %08lx, actual %08lx\n",
 						val, readback);
 				errs++;
+#if defined(CONFIG_TEMPERATURE)
+	print_temperature();
+#endif
 				if (ctrlc())
 					return -1;
 			}
@@ -690,6 +693,10 @@ static ulong mem_test_alt(vu_long *buf, ulong start_addr, ulong end_addr,
 					"Is %08lx, should be %08lx\n",
 						readback, ~val);
 				errs++;
+#if defined(CONFIG_TEMPERATURE)
+	print_temperature();
+#endif
+
 				if (ctrlc())
 					return -1;
 			}
@@ -755,6 +762,9 @@ static ulong mem_test_alt(vu_long *buf, ulong start_addr, ulong end_addr,
 				" expected 0x%.8lx, actual 0x%.8lx\n",
 				start_addr + offset, pattern, temp);
 			errs++;
+#if defined(CONFIG_TEMPERATURE)
+	print_temperature();
+#endif
 			if (ctrlc())
 				return -1;
 		}
@@ -776,6 +786,10 @@ static ulong mem_test_alt(vu_long *buf, ulong start_addr, ulong end_addr,
 					" actual 0x%.8lx\n",
 					start_addr + offset, pattern, temp);
 				errs++;
+#if defined(CONFIG_TEMPERATURE)
+	print_temperature();
+#endif
+
 				if (ctrlc())
 					return -1;
 			}
@@ -823,6 +837,10 @@ static ulong mem_test_alt(vu_long *buf, ulong start_addr, ulong end_addr,
 				" expected 0x%.8lx, actual 0x%.8lx)\n",
 				start_addr + offset, pattern, temp);
 			errs++;
+#if defined(CONFIG_TEMPERATURE)
+	print_temperature();
+#endif
+
 			if (ctrlc())
 				return -1;
 		}
@@ -848,6 +866,9 @@ static ulong mem_test_alt(vu_long *buf, ulong start_addr, ulong end_addr,
 				" expected 0x%.8lx, actual 0x%.8lx)\n",
 				start_addr + offset, anti_pattern, temp);
 			errs++;
+#if defined(CONFIG_TEMPERATURE)
+	print_temperature();
+#endif
 			if (ctrlc())
 				return -1;
 		}
