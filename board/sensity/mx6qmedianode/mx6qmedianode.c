@@ -255,16 +255,17 @@ u32 c1, c2;
 
 void print_temperature(void)
 {
-	u32 val;
+	u32 val = 0;
 	unsigned int n_meas;
 	unsigned long temp;
-	writel(TEMPSENSE0_POWER_DOWN,(u32*)(TEMPMON_TEMPSENSE0 + REG_CLR));
-	writel(TEMPSENSE0_MEASURE_TEMP,(u32*)(TEMPMON_TEMPSENSE0 + REG_SET));
-	udelay(30);
-	val = readl((u32*)(TEMPMON_TEMPSENSE0));
-	writel(TEMPSENSE0_MEASURE_TEMP,(u32*)(TEMPMON_TEMPSENSE0 + REG_CLR));
-	writel(TEMPSENSE0_POWER_DOWN,(u32*)(TEMPMON_TEMPSENSE0 + REG_SET));
-
+	while((val & TEMPSENSE0_FINISHED) == 0) {
+		writel(TEMPSENSE0_POWER_DOWN,(u32*)(TEMPMON_TEMPSENSE0 + REG_CLR));
+		writel(TEMPSENSE0_MEASURE_TEMP,(u32*)(TEMPMON_TEMPSENSE0 + REG_SET));
+		udelay(100);
+		val = readl((u32*)(TEMPMON_TEMPSENSE0));
+		writel(TEMPSENSE0_MEASURE_TEMP,(u32*)(TEMPMON_TEMPSENSE0 + REG_CLR));
+		writel(TEMPSENSE0_POWER_DOWN,(u32*)(TEMPMON_TEMPSENSE0 + REG_SET));
+	}
 	n_meas = (val & TEMPSENSE0_TEMP_CNT_MASK) >> TEMPSENSE0_TEMP_CNT_SHIFT;
 	temp = c2 - n_meas * c1;
 
