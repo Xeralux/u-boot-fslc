@@ -118,8 +118,8 @@
 	"initrd_high=0xffffffff\0" \
 	"mmcdev=0\0" \
 	"mmcpart=2\0" \
-	"mmcroot=" CONFIG_MMCROOT " rootwait rw\0" \
-	"mmcroot_eval=setenv mmcroot " CONFIG_MMCROOT_DEV "${mmcdev}p${mmcpart} rootwait rw\0" \
+	"mmcroot=" CONFIG_MMCROOT " rootwait ro\0" \
+	"mmcroot_eval=setenv mmcroot " CONFIG_MMCROOT_DEV "${mmcdev}p${mmcpart} rootwait ro\0" \
 	"update_sd_firmware=" \
 		"if test ${ip_dyn} = yes; then " \
 			"setenv get_cmd dhcp; " \
