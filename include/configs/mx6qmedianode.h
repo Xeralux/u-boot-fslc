@@ -24,11 +24,24 @@
 #define CONFIG_MMCROOT_PART		"2"
 #define CONFIG_MMCROOT			CONFIG_MMCROOT_DEV CONFIG_MMCROOT_DEVNUM "p" CONFIG_MMCROOT_PART
 
+#if defined(CONFIG_MEDIANODE)
+
 #if defined(CONFIG_MX6Q)
 #define CONFIG_DEFAULT_FDT_FILE	"imx6q-sensity_medianode.dtb"
 #elif defined(CONFIG_MX6DL)
 #define CONFIG_DEFAULT_FDT_FILE	"imx6dl-sensity_medianode.dtb"
 #endif
+
+#elif defined(CONFIG_FALCON)
+
+#if defined(CONFIG_MX6Q)
+#define CONFIG_DEFAULT_FDT_FILE	"imx6q-sensity_falcon.dtb"
+#elif defined(CONFIG_MX6DL)
+#define CONFIG_DEFAULT_FDT_FILE	"imx6dl-sensity_falcon.dtb"
+#endif
+
+#endif
+
 #define PHYS_SDRAM_SIZE		(1u * 1024 * 1024 * 1024)
 
 /*
