@@ -191,20 +191,44 @@ char *fw_getdefenv(char *name)
 	return NULL;
 }
 
+static char *
+fw_findvar (char *name, struct environment const *arg_env)
+{
+	char *env, *nxt;
+
+	for (env = arg_env->data;  *env;  env = nxt + 1) {
+		char *val;
+
+		for (nxt = env;  *nxt;  ++nxt) {
+			if (nxt >= &arg_env->data[ENV_SIZE]) {
+				fprintf (stderr, "## Error: "
+					"environment not terminated\n");
+				return NULL;
+			}
+		}
+		val = envmatch (name, env);
+		if (val) {
+			return val;
+		}
+	}
+	return NULL;
+}
+
 /*
  * Print the current definition of one, or more, or all
  * environment variables
  */
-int fw_printenv (int argc, char *argv[])
+int fw_printenv (int argc, int optind, char *argv[], int single_var, int force_default)
 {
-	char *env, *nxt;
-	int i, n_flag;
+	int i;
 	int rc = 0;
 
-	if (fw_env_open())
+	if (fw_env_open (force_default) < 0)
 		return -1;
 
 	if (argc == 1) {		/* Print all env variables  */
+		char *env, *nxt;
+
 		for (env = environment.data; *env; env = nxt + 1) {
 			for (nxt = env; *nxt; ++nxt) {
 				if (nxt >= &environment.data[ENV_SIZE]) {
@@ -219,43 +243,27 @@ int fw_printenv (int argc, char *argv[])
 		return 0;
 	}
 
-	if (strcmp (argv[1], "-n") == 0) {
-		n_flag = 1;
-		++argv;
-		--argc;
-		if (argc != 2) {
+	if (single_var) {
+		if (argc != 3) {
 			fprintf (stderr, "## Error: "
-				"`-n' option requires exactly one argument\n");
+				"\"-n\" option requires exactly one argument\n");
 			return -1;
 		}
-	} else {
-		n_flag = 0;
 	}
 
-	for (i = 1; i < argc; ++i) {	/* print single env variables   */
+	for (i = optind;  i < argc;  ++i) {	/* print single env variables   */
 		char *name = argv[i];
-		char *val = NULL;
+		char *val;
 
-		for (env = environment.data; *env; env = nxt + 1) {
-
-			for (nxt = env; *nxt; ++nxt) {
-				if (nxt >= &environment.data[ENV_SIZE]) {
-					fprintf (stderr, "## Error: "
-						"environment not terminated\n");
-					return -1;
-				}
+		val = fw_findvar (name, &environment);
+		if (val) {
+			if (!single_var) {
+				fputs (name, stdout);
+				putc ('=', stdout);
 			}
-			val = envmatch (name, env);
-			if (val) {
-				if (!n_flag) {
-					fputs (name, stdout);
-					putc ('=', stdout);
-				}
-				puts (val);
-				break;
-			}
-		}
-		if (!val) {
+			puts (val);
+			break;
+		} else {
 			fprintf (stderr, "## Error: \"%s\" not defined\n", name);
 			rc = -1;
 		}
@@ -405,55 +413,114 @@ int fw_env_write(char *name, char *value)
 
 /*
  * Deletes or sets environment variables. Returns -1 and sets errno error codes:
+ *
+ * force_default:
+ *	0: Modify stored environment block.
+ *	1: Restore named variable from compile-time default environment.
+ *	2: Restore all variables from compile-time default environment.
+ *
+ * Return values:
  * 0	  - OK
  * EINVAL - need at least 1 argument
  * EROFS  - certain variables ("ethaddr", "serial#") cannot be
  *	    modified or deleted
  *
  */
-int fw_setenv(int argc, char *argv[])
+int fw_setenv(int argc, int optind, char *argv[], int force_default)
 {
+	int rc;
 	int i;
+	int efv_ac;
+	char **efv_av;
 	size_t len;
 	char *name;
 	char *value = NULL;
 
-	if (argc < 2) {
+	if (optind >= argc  &&  force_default != 2) {
+		/*  Missing name argument.  */
 		errno = EINVAL;
 		return -1;
 	}
 
-	if (fw_env_open()) {
+	rc = fw_env_open (force_default);
+	if (rc < 0) {
 		fprintf(stderr, "Error: environment not initialized\n");
 		return -1;
 	}
 
-	name = argv[1];
+	name = argv[optind];
 
-	if (env_flags_validate_env_set_params(argc, argv) < 0)
-		return 1;
-
-	len = 0;
-	for (i = 2; i < argc; ++i) {
-		char *val = argv[i];
-		size_t val_len = strlen(val);
-
-		if (value)
-			value[len - 1] = ' ';
-		value = realloc(value, len + val_len + 1);
-		if (!value) {
-			fprintf(stderr,
-				"Cannot malloc %zu bytes: %s\n",
-				len, strerror(errno));
+	if (force_default) {
+		/*  Restore from default block.  */
+		if (argc > optind + 1) {
+			fprintf (stderr,
+			         "Error: Can only restore single variable from "
+				 "default per invocation.\n");
 			return -1;
 		}
 
-		memcpy(value + len, val, val_len);
-		len += val_len;
-		value[len++] = '\0';
-	}
+		if (force_default == 1) {
+			/*  Fetch default environment value.  */
+			value = fw_findvar (name, &environment);
+			if (!value) {
+				fprintf (stderr,
+				         "Error: variable \"%s\" not found "
+				         "in default environment.\n",
+				         name);
+				return -1;
+			}
+			value = strdup (value);
 
-	fw_env_write(name, value);
+			/*  Now load the stored environment block...  */
+			rc = fw_env_open (0);
+			if (rc > 0) {
+				fprintf (stderr,
+				         "Error: default environment already "
+					 "in use; aborting.\n");
+				return -1;
+			}
+
+			/*  ...And update it.  */
+			fw_env_write (name, value);
+		}
+	} else {
+		/*  Modify "in-scope" block.  */
+
+		/*
+		 * Provide adjusted ac/av values to env_flags_validate_env_set_params(),
+		 * skipping over options it isn't the least bit prepared to cope with.
+		 */
+		efv_ac = argc - optind + 1;
+		efv_av = argv + optind - 1;
+		if (env_flags_validate_env_set_params(efv_ac, efv_av) < 0)
+			return 1;
+
+		/*
+		 * Concatenate all arguments following the name into a single
+		 * space-separated string.
+		 */
+		len = 0;
+		for (i = optind + 1;  i < argc;  ++i) {
+			char *val = argv[i];
+			size_t val_len = strlen(val);
+
+			if (value)
+				value[len - 1] = ' ';
+			value = realloc(value, len + val_len + 1);
+			if (!value) {
+				fprintf(stderr,
+					"Cannot malloc %zu bytes: %s\n",
+					len, strerror(errno));
+				return -1;
+			}
+
+			memcpy(value + len, val, val_len);
+			len += val_len;
+			value[len++] = '\0';
+		}
+
+		fw_env_write (name, value);
+	}
 
 	free(value);
 
@@ -487,7 +554,7 @@ int fw_parse_script(char *fname)
 	int len;
 	int ret = 0;
 
-	if (fw_env_open()) {
+	if (fw_env_open (0)) {
 		fprintf(stderr, "Error: environment not initialized\n");
 		return -1;
 	}
@@ -1064,8 +1131,13 @@ static char *envmatch (char * s1, char * s2)
 
 /*
  * Prevent confusion if running from erased flash memory
+ *
+ * Return values:
+ * 1:	Loaded compile-time defaults.
+ * 0:	Loaded stored environment block.
+ * <0:	Error.
  */
-int fw_env_open(void)
+int fw_env_open (int force_default)
 {
 	int crc0, crc0_ok;
 	unsigned char flag0;
@@ -1077,6 +1149,8 @@ int fw_env_open(void)
 
 	struct env_image_single *single;
 	struct env_image_redundant *redundant;
+
+	int retval = 0;
 
 	if (parse_config ())		/* should fill envdevices */
 		return -1;
@@ -1108,13 +1182,20 @@ int fw_env_open(void)
 	if (flash_io (O_RDONLY))
 		return -1;
 
-	crc0 = crc32 (0, (uint8_t *) environment.data, ENV_SIZE);
-	crc0_ok = (crc0 == *environment.crc);
+	if (force_default) {
+		crc0 = crc0_ok = 0;
+	} else {
+		crc0 = crc32 (0, (uint8_t *) environment.data, ENV_SIZE);
+		crc0_ok = (crc0 == *environment.crc);
+	}
 	if (!HaveRedundEnv) {
 		if (!crc0_ok) {
-			fprintf (stderr,
-				"Warning: Bad CRC, using default environment\n");
+			if (!force_default) {
+				fprintf (stderr,
+					"Warning: Bad CRC, using default environment\n");
+			}
 			memcpy(environment.data, default_environment, sizeof default_environment);
+			retval = 1;
 		}
 	} else {
 		flag0 = *environment.flags;
@@ -1158,8 +1239,12 @@ int fw_env_open(void)
 			return -1;
 		}
 
-		crc1 = crc32 (0, (uint8_t *) redundant->data, ENV_SIZE);
-		crc1_ok = (crc1 == redundant->crc);
+		if (force_default) {
+			crc1 = crc1_ok = 0;
+		} else {
+			crc1 = crc32 (0, (uint8_t *) redundant->data, ENV_SIZE);
+			crc1_ok = (crc1 == redundant->crc);
+		}
 		flag1 = redundant->flags;
 
 		if (crc0_ok && !crc1_ok) {
@@ -1167,10 +1252,13 @@ int fw_env_open(void)
 		} else if (!crc0_ok && crc1_ok) {
 			dev_current = 1;
 		} else if (!crc0_ok && !crc1_ok) {
-			fprintf (stderr,
-				"Warning: Bad CRC, using default environment\n");
+			if (!force_default) {
+				fprintf (stderr,
+					"Warning: Bad CRC, using default environment\n");
+			}
 			memcpy (environment.data, default_environment,
 				sizeof default_environment);
+			retval = 1;
 			dev_current = 0;
 		} else {
 			switch (environment.flag_scheme) {
@@ -1227,7 +1315,7 @@ int fw_env_open(void)
 		fprintf(stderr, "Selected env in %s\n", DEVNAME(dev_current));
 #endif
 	}
-	return 0;
+	return retval;
 }
 
 

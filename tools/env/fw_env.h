@@ -52,11 +52,13 @@
 	"bootm"
 #endif
 
-extern int   fw_printenv(int argc, char *argv[]);
+extern int   fw_printenv(int argc, int optind, char *argv[],
+                         int single_var, int force_default);
 extern char *fw_getenv  (char *name);
-extern int fw_setenv  (int argc, char *argv[]);
+extern int fw_setenv  (int argc, int optind, char *argv[],
+                       int force_default);
 extern int fw_parse_script(char *fname);
-extern int fw_env_open(void);
+extern int fw_env_open (int force_default);
 extern int fw_env_write(char *name, char *value);
 extern int fw_env_close(void);
 

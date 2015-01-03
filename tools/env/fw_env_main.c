@@ -37,6 +37,8 @@
 
 static struct option long_options[] = {
 	{"script", required_argument, NULL, 's'},
+	{"default", no_argument, NULL, 'd'},
+	{"all", no_argument, NULL, 'a'},
 	{"help", no_argument, NULL, 'h'},
 	{NULL, 0, NULL, 0}
 };
@@ -45,12 +47,16 @@ void usage(void)
 {
 
 	fprintf(stderr, "fw_printenv/fw_setenv, "
-		"a command line interface to U-Boot environment\n\n"
-		"usage:\tfw_printenv [-n] [variable name]\n"
-		"\tfw_setenv [variable name] [variable value]\n"
-		"\tfw_setenv -s [ file ]\n"
-		"\tfw_setenv -s - < [ file ]\n\n"
-		"The file passed as argument contains only pairs "
+		"Command line tool to inspect/alter U-Boot environment variables.\n\n"
+		"usage:\tfw_printenv [-n] <variable_name>\n"
+		"\tfw_setenv <variable_name> <variable_value>\n"
+		"\tfw_setenv -d <variable_name>\n"
+		"\t\tRestore <variable_name> to compile-time default.\n"
+		"\tfw_setenv -d -a\n"
+		"\t\tRestore all variables to compile-time defaults.\n"
+		"\tfw_setenv -s [ script_file ]\n"
+		"\tfw_setenv -s - < [ script_file ]\n\n"
+		"The script_file passed as argument contains only pairs "
 		"name / value\n"
 		"Example:\n"
 		"# Any line starting with # is treated as comment\n"
@@ -73,6 +79,8 @@ int main(int argc, char *argv[])
 	char *p;
 	char *cmdname = *argv;
 	char *script_file = NULL;
+	int force_default = 0;
+	int single_var = 0;
 	int c;
 	const char *lockname = "/var/lock/" CMD_PRINTENV ".lock";
 	int lockfd = -1;
@@ -94,14 +102,28 @@ int main(int argc, char *argv[])
 		cmdname = p + 1;
 	}
 
-	while ((c = getopt_long (argc, argv, "ns:h",
+	while ((c = getopt_long (argc, argv, "ns:dah",
 		long_options, NULL)) != EOF) {
 		switch (c) {
 		case 'n':
 			/* handled in fw_printenv */
+			single_var = 1;
 			break;
 		case 's':
 			script_file = optarg;
+			break;
+		case 'd':
+			force_default = 1;
+			break;
+		case 'a':
+			if (force_default) {
+				force_default++;
+			} else {
+				fprintf (stderr,
+				         "Error: "
+				         "Option -a only valid after -d.\n");
+				goto exit;
+			}
 			break;
 		case 'h':
 			usage();
@@ -115,11 +137,15 @@ int main(int argc, char *argv[])
 	}
 
 	if (strcmp(cmdname, CMD_PRINTENV) == 0) {
-		if (fw_printenv(argc, argv) != 0)
+		if (fw_printenv (argc, optind, argv,
+		                 single_var, force_default) != 0)
 			retval = EXIT_FAILURE;
 	} else if (strcmp(cmdname, CMD_SETENV) == 0) {
-		if (!script_file) {
-			if (fw_setenv(argc, argv) != 0)
+		if (single_var) {
+			fprintf (stderr, "\"-n\" option makes no sense here.\n");
+			retval = EXIT_FAILURE;
+		} else if (!script_file) {
+			if (fw_setenv (argc, optind, argv, force_default) != 0)
 				retval = EXIT_FAILURE;
 		} else {
 			if (fw_parse_script(script_file) != 0)
