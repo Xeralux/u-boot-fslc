@@ -101,6 +101,10 @@
 #define CONFIG_PHYLIB
 #define CONFIG_PHY_MICREL
 
+/*  One-Time Programmable fuse support.  */
+#define	CONFIG_MXC_OCOTP
+#define	CONFIG_CMD_FUSE
+
 /* allow to overwrite serial and ethaddr */
 #define CONFIG_ENV_OVERWRITE
 #define CONFIG_CONS_INDEX              1
