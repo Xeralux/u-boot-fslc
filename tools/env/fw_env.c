@@ -262,7 +262,6 @@ int fw_printenv (int argc, int optind, char *argv[], int single_var, int force_d
 				putc ('=', stdout);
 			}
 			puts (val);
-			break;
 		} else {
 			fprintf (stderr, "## Error: \"%s\" not defined\n", name);
 			rc = -1;
