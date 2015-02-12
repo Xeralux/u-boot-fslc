@@ -135,6 +135,7 @@
 		"fi\0" \
 	"mmcargs=test -n ${mmcroot_eval}  &&  run mmcroot_eval; " \
 		"setenv bootargs console=${console},${baudrate} " \
+		"loglevel=3 " \
 		"root=${mmcroot}\0" \
 	"loadbootscript=" \
 		"ext2load mmc ${mmcdev}:${mmcpart} ${loadaddr} ${script};\0" \
