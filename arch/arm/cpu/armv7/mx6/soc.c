@@ -223,6 +223,22 @@ static void init_bandgap(void)
 	writel(BM_ANADIG_ANA_MISC0_REFTOP_SELBIASOFF, &anatop->ana_misc0_set);
 }
 
+#define SRC_SCR_WARM_RESET_ENABLE	0
+
+static void init_src(void)
+{
+	struct src *src_regs = (struct src *)SRC_BASE_ADDR;
+	u32 val;
+
+	/*
+	 * force warm reset sources to generate cold reset
+	 * for a more reliable restart
+	 */
+	val = readl(&src_regs->scr);
+	val &= ~(1 << SRC_SCR_WARM_RESET_ENABLE);
+	writel(val, &src_regs->scr);
+}
+
 int arch_cpu_init(void)
 {
 	init_aips();
@@ -251,6 +267,8 @@ int arch_cpu_init(void)
 	/* Start APBH DMA */
 	mxs_dma_init();
 #endif
+
+	init_src();
 
 	return 0;
 }
