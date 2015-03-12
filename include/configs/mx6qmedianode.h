@@ -118,18 +118,22 @@
 #define CONFIG_CMD_SETEXPR
 #undef CONFIG_CMD_IMLS
 
-#define CONFIG_BOOTDELAY               1
+#define CONFIG_BOOTDELAY               0
 
 #define CONFIG_LOADADDR                        0x12000000
 #define CONFIG_SYS_TEXT_BASE           0x17800000
 
 #define CONFIG_EXTRA_ENV_SETTINGS \
-	"script=boot.scr\0" \
+	"bootfailcheck=no\0" \
+	"bootfailcount=0\0" \
+	"bootfailmax=3\0" \
+	"bootretry=-1\0" \
+	"autoboot=yes\0" \
+	"lastbootfailed=no\0" \
+	"upgradeinprogress=no\0" \
 	"uimage=uImage\0" \
 	"fdt_file=" CONFIG_DEFAULT_FDT_FILE "\0" \
 	"fdt_addr=0x18000000\0" \
-	"boot_fdt=try\0" \
-	"ip_dyn=yes\0" \
 	"console=" CONFIG_CONSOLE_DEV "\0" \
 	"fdt_high=0xffffffff\0"	  \
 	"initrd_high=0xffffffff\0" \
@@ -137,81 +141,55 @@
 	"mmcpart=2\0" \
 	"mmcroot=" CONFIG_MMCROOT " rootwait ro\0" \
 	"mmcroot_eval=setenv mmcroot " CONFIG_MMCROOT_DEV "${mmcdev}p${mmcpart} rootwait ro\0" \
-	"update_sd_firmware=" \
-		"if test ${ip_dyn} = yes; then " \
-			"setenv get_cmd dhcp; " \
-		"else " \
-			"setenv get_cmd tftp; " \
-		"fi; " \
-		"if mmc dev ${mmcdev}; then "	\
-			"if ${get_cmd} ${update_sd_firmware_filename}; then " \
-				"setexpr fw_sz ${filesize} / 0x200; " \
-				"setexpr fw_sz ${fw_sz} + 1; "	\
-				"mmc write ${loadaddr} 0x2 ${fw_sz}; " \
-			"fi; "	\
-		"fi\0" \
 	"mmcargs=test -n ${mmcroot_eval}  &&  run mmcroot_eval; " \
 		"setenv bootargs console=${console},${baudrate} " \
 		"loglevel=3 " \
-		"root=${mmcroot}\0" \
-	"loadbootscript=" \
-		"ext2load mmc ${mmcdev}:${mmcpart} ${loadaddr} ${script};\0" \
-	"bootscript=echo Running bootscript from mmc ...; " \
-		"source\0" \
+		"root=${mmcroot};" \
+		"echo Boot args: ${bootargs}\0" \
 	"loaduimage=ext2load mmc ${mmcdev}:${mmcpart} ${loadaddr} /boot/${uimage}\0" \
 	"loadfdt=ext2load mmc ${mmcdev}:${mmcpart} ${fdt_addr} /boot/${fdt_file}\0" \
+	"bootauto=if test ${bootfailcheck} = yes -a ${lastbootfailed} = yes; then " \
+			"setexpr bootfailcount ${bootfailcount} + 1;" \
+			"if test ${mmcpart} -eq 2; then setenv mmcpart 3; else setenv mmcpart 2; fi;" \
+			"echo \"Last boot failed (count ${bootfailcount} of ${bootfailmax}), trying partition ${mmcpart}\";" \
+		"fi;" \
+		"if test ${bootfailcheck} != yes -o ${bootfailcount} -lt ${bootfailmax}; then " \
+			"if test ${bootfailcheck} = yes; then setenv lastbootfailed yes; saveenv; fi;" \
+			"if mmc rescan; then " \
+				"run mmcargs;" \
+				"if run loaduimage; then " \
+					"run mmcboot;" \
+				"fi;" \
+			"fi;" \
+		"else " \
+			"echo \"FAIL: too many boot failures\";" \
+		"fi;" \
+		"echo \"Auto-boot FAILED\";\0" \
 	"mmcboot=echo Booting from mmc ...; " \
-		"run mmcargs; " \
-		"if test ${boot_fdt} = yes || test ${boot_fdt} = try; then " \
-			"if run loadfdt; then " \
-				"bootm ${loadaddr} - ${fdt_addr}; " \
-			"else " \
-				"if test ${boot_fdt} = try; then " \
-					"bootm; " \
-				"else " \
-					"echo WARN: Cannot load the DT; " \
-				"fi; " \
-			"fi; " \
-		"else " \
-			"bootm; " \
+		"if run loadfdt; then " \
+			"bootm ${loadaddr} - ${fdt_addr}; " \
+		"else; " \
+			"echo FAIL: could not load FDT; " \
 		"fi;\0" \
-	"netargs=setenv bootargs console=${console},${baudrate} " \
-		"root=/dev/nfs " \
-		"ip=dhcp nfsroot=${serverip}:${nfsroot},v3,tcp\0" \
-	"netboot=echo Booting from net ...; " \
-		"run netargs; " \
-		"if test ${ip_dyn} = yes; then " \
-			"setenv get_cmd dhcp; " \
-		"else " \
-			"setenv get_cmd tftp; " \
-		"fi; " \
-		"${get_cmd} ${uimage}; " \
-		"if test ${boot_fdt} = yes || test ${boot_fdt} = try; then " \
-			"if ${get_cmd} ${fdt_addr} ${fdt_file}; then " \
-				"bootm ${loadaddr} - ${fdt_addr}; " \
-			"else " \
-				"if test ${boot_fdt} = try; then " \
-					"bootm; " \
-				"else " \
-					"echo WARN: Cannot load the DT; " \
-				"fi; " \
-			"fi; " \
-		"else " \
-			"bootm; " \
-		"fi;\0"
 
 #define CONFIG_BOOTCOMMAND \
 	"mmc dev ${mmcdev};" \
+	"if env print ethaddr; then " \
+		"echo Ethernet address: ${ethaddr}; " \
+	"else " \
+		"echo No Ethernet address set, disabling auto-boot.;" \
+		"setenv autoboot no; saveenv;" \
+	"fi;" \
 	"if mmc rescan; then " \
-		"if run loadbootscript; then " \
-		"run bootscript; " \
+		"if test \"${autoboot}\" != \"no\"; then " \
+			"echo \"Auto-booting...\";" \
+			"run bootauto;" \
 		"else " \
-			"if run loaduimage; then " \
-				"run mmcboot; " \
-			"else run netboot; " \
-			"fi; " \
-		"fi; " \
-	"else run netboot; fi"
+			"echo \"Auto-boot disabled. run bootauto to boot.\";" \
+		"fi;" \
+	"else " \
+		"echo \"mmc rescan failed, skipping auto-boot.\";" \
+	"fi"
 
 #define CONFIG_ARP_TIMEOUT     200UL
 
@@ -222,6 +200,11 @@
 #define CONFIG_SYS_PROMPT              "U-Boot > "
 #define CONFIG_AUTO_COMPLETE
 #define CONFIG_SYS_CBSIZE              256
+
+/* Command timeout, infinite by default, min 10 sec if set */
+#define CONFIG_BOOT_RETRY_TIME         -1
+#define CONFIG_BOOT_RETRY_TIME_MIN     10
+#define CONFIG_RESET_TO_RETRY
 
 /* Print Buffer Size */
 #define CONFIG_SYS_PBSIZE (CONFIG_SYS_CBSIZE + sizeof(CONFIG_SYS_PROMPT) + 16)
