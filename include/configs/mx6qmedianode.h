@@ -124,7 +124,7 @@
 #define CONFIG_SYS_TEXT_BASE           0x17800000
 
 #define CONFIG_EXTRA_ENV_SETTINGS \
-	"bootfailcheck=no\0" \
+	"bootfailcheck=yes\0" \
 	"bootfailcount=0\0" \
 	"bootfailmax=3\0" \
 	"bootretry=-1\0" \
