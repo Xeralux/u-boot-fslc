@@ -127,7 +127,6 @@
 	"bootfailcheck=yes\0" \
 	"bootfailcount=0\0" \
 	"bootfailmax=3\0" \
-	"bootretry=-1\0" \
 	"autoboot=yes\0" \
 	"lastbootfailed=no\0" \
 	"upgradeinprogress=no\0" \
@@ -201,8 +200,8 @@
 #define CONFIG_AUTO_COMPLETE
 #define CONFIG_SYS_CBSIZE              256
 
-/* Command timeout, infinite by default, min 10 sec if set */
-#define CONFIG_BOOT_RETRY_TIME         -1
+/* Command timeout, 5 minutes by default, min 10 sec if set */
+#define CONFIG_BOOT_RETRY_TIME         300
 #define CONFIG_BOOT_RETRY_TIME_MIN     10
 #define CONFIG_RESET_TO_RETRY
 
