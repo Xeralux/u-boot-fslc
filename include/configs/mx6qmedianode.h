@@ -127,6 +127,7 @@
 	"bootfailcheck=yes\0" \
 	"bootfailcount=0\0" \
 	"bootfailmax=3\0" \
+	"bootretry=300\0" \
 	"autoboot=yes\0" \
 	"lastbootfailed=no\0" \
 	"upgradeinprogress=no\0" \
