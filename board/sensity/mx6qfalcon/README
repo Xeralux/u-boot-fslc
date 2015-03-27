@@ -1,0 +1,10 @@
+U-Boot for the Sensity System Falcon board
+
+This file contains information for the port of
+U-Boot to the Sensity Systems Falcon board,
+based on the Freescale i.MX6 Quad SOC.
+
+Building U-Boot for Falcon:
+
+$ make mx6qfalcon_config
+$ make

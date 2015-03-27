@@ -514,6 +514,10 @@ config TARGET_MX6QARM2
 	bool "Support mx6qarm2"
 	select CPU_V7
 
+config TARGET_MX6QFALCON
+	bool "Support mx6qfalcon"
+	select CPU_V7
+
 config TARGET_MX6QSABREAUTO
 	bool "Support mx6qsabreauto"
 	select CPU_V7
@@ -866,6 +870,8 @@ source "board/samsung/smdk2410/Kconfig"
 source "board/sandisk/sansa_fuze_plus/Kconfig"
 source "board/scb9328/Kconfig"
 source "board/schulercontrol/sc_sps_1/Kconfig"
+source "board/sensity/mx6qfalcon/Kconfig"
+source "board/siemens/corvus/Kconfig"
 source "board/siemens/draco/Kconfig"
 source "board/siemens/pxm2/Kconfig"
 source "board/siemens/rut/Kconfig"
