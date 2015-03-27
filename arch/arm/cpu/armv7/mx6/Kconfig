@@ -105,6 +105,10 @@ config TARGET_MX6Q_ICORE
 	select DM_THERMAL
 	select SUPPORT_SPL
 
+config TARGET_MX6QFALCON
+	bool "Support mx6qfalcon"
+	select MX6Q
+
 config TARGET_MX6QSABREAUTO
 	bool "mx6qsabreauto"
 	select DM
@@ -248,6 +252,7 @@ source "board/phytec/pcm058/Kconfig"
 source "board/gateworks/gw_ventana/Kconfig"
 source "board/kosagi/novena/Kconfig"
 source "board/seco/Kconfig"
+source "board/sensity/mx6qfalcon/Kconfig"
 source "board/solidrun/mx6cuboxi/Kconfig"
 source "board/technexion/pico-imx6ul/Kconfig"
 source "board/tbs/tbs2910/Kconfig"
