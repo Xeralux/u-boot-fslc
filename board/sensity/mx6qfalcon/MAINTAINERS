@@ -1,0 +1,6 @@
+MX6QFALCON BOARD
+M:	Sensity Systems <xeralux-sweng@sensity.com>
+S:	Maintained
+F:	board/sensity/mx6qfalcon/
+F:	include/configs/mx6qfalcon.h
+F:	configs/mx6qfalcon_defconfig
