@@ -483,6 +483,7 @@ int fw_setenv(int argc, char *argv[])
 	size_t len;
 	char *name;
 	char *value = NULL;
+        enum { OP_SET, OP_DEFAULT, OP_DEFAULTALL } op = OP_SET;
 
 	if (argc < 2) {
 		errno = EINVAL;
@@ -507,12 +508,48 @@ int fw_setenv(int argc, char *argv[])
 		return -1;
 	}
 
+        if (strcmp(argv[1], "-D") == 0) {
+                op = OP_DEFAULTALL;
+                if (argc > 2) {
+                        fprintf(stderr, "Error: too many arguments for -D\n");
+                        errno = EINVAL;
+                        return -1;
+                }
+                argc -= 1;
+                argv += 1;
+        } else if (strcmp(argv[1], "-d") == 0) {
+                op = OP_DEFAULT;
+                if (argc > 3) {
+                        fprintf(stderr, "Error: too many arguments for -d\n");
+                        errno = EINVAL;
+                        return -1;
+                }
+                argc -= 1;
+                argv += 1;
+        }
+
 	if (fw_env_open()) {
 		fprintf(stderr, "Error: environment not initialized\n");
 		return -1;
 	}
 
+        if (op == OP_DEFAULTALL) {
+                memcpy(environment.data, default_environment, sizeof default_environment);
+                return fw_env_close();
+        }
+
 	name = argv[1];
+
+        if (op == OP_DEFAULT) {
+                value = fw_getdefenv(name);
+                if (value == NULL) {
+                        fprintf(stderr, "Error: no default for %s\n", name);
+                        errno = EINVAL;
+                        return -1;
+                }
+                fw_env_write(name, value);
+                return fw_env_close();
+        }
 
 	if (env_flags_validate_env_set_params(argc, argv) < 0)
 		return 1;

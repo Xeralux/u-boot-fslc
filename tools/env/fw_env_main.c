@@ -14,13 +14,15 @@
  *                "name", the ``name=value'' pairs of one or more
  *                environment variables "name", or the whole
  *                environment if no names are specified.
- *	fw_setenv [ -a key ] name [ value ... ]
+ *	fw_setenv [ -a key ] [-D | [-d] name | name [ value ... ]]
  *		- If a name without any values is given, the variable
  *		  with this name is deleted from the environment;
  *		  otherwise, all "value" arguments are concatenated,
  *		  separated by single blank characters, and the
  *		  resulting string is assigned to the environment
  *		  variable "name"
+ *                -D: reset entire environment to default
+ *                -d name: reset single environment variable to default
  *
  * If '-a key' is specified, the env block is encrypted with AES 128 CBC.
  * The 'key' argument is in the format of 32 hexadecimal numbers (16 bytes
@@ -52,6 +54,8 @@ void usage(void)
 		"a command line interface to U-Boot environment\n\n"
 		"usage:\tfw_printenv [-a key] [-n] [variable name]\n"
 		"\tfw_setenv [-a key] [variable name] [variable value]\n"
+		"\tfw_setenv [-a key] -d [variable name]\n"
+		"\tfw_setenv [-a key] -D\n"
 		"\tfw_setenv -s [ file ]\n"
 		"\tfw_setenv -s - < [ file ]\n\n"
 		"The file passed as argument contains only pairs "
@@ -98,11 +102,17 @@ int main(int argc, char *argv[])
 		cmdname = p + 1;
 	}
 
-	while ((c = getopt_long (argc, argv, "a:ns:h",
+	while ((c = getopt_long (argc, argv, "a:ns:Ddh",
 		long_options, NULL)) != EOF) {
 		switch (c) {
 		case 'a':
 			/* AES key, handled later */
+			break;
+		case 'd':
+                        /* default a variable */
+			break;
+		case 'D':
+                        /* default entire environment */
 			break;
 		case 'n':
 			/* handled in fw_printenv */
