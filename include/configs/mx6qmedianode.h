@@ -42,7 +42,7 @@
 
 #endif
 
-#define PHYS_SDRAM_SIZE		(1u * 1024 * 1024 * 1024)
+#define PHYS_SDRAM_SIZE		(2u * 1024 * 1024 * 1024)
 
 /*
  * Copyright (C) 2012 Freescale Semiconductor, Inc.
