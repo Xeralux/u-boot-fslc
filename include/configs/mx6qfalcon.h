@@ -30,7 +30,7 @@
 #error Unknown configuration for Sensity Falcon board
 #endif
 
-#define PHYS_SDRAM_SIZE		(1u * 1024 * 1024 * 1024)
+#define PHYS_SDRAM_SIZE		(2u * 1024 * 1024 * 1024)
 
 #define CONFIG_DISPLAY_CPUINFO
 #define CONFIG_DISPLAY_BOARDINFO
