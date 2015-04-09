@@ -95,16 +95,35 @@
 #define CONFIG_CMD_SETEXPR
 #undef CONFIG_CMD_IMLS
 
+#ifdef CONFIG_MANUFACTURING
+#define CONFIG_BOOTDELAY               5
+#else
 #define CONFIG_BOOTDELAY               0
+#endif
+
+#ifdef CONFIG_MANUFACTURING
+#define CONFIG_BOOT_RETRY_TIME        -1
+#define bootfailcheck__ "no"
+#else
+/* Command timeout, 5 minutes by default, min 10 sec if set */
+#define CONFIG_BOOT_RETRY_TIME         300
+#define bootfailcheck__ "yes"
+#endif
+#define CONFIG_BOOT_RETRY_TIME_MIN     10
+#define CONFIG_RESET_TO_RETRY
 
 #define CONFIG_LOADADDR                        0x12000000
 #define CONFIG_SYS_TEXT_BASE           0x17800000
 
+#define mkstring_(_x) mkstring__(_x)
+#define mkstring__(_x) #_x
+
 #define CONFIG_EXTRA_ENV_SETTINGS \
-	"bootfailcheck=yes\0" \
+	"bootfailcheck=" bootfailcheck__ "\0" \
 	"bootfailcount=0\0" \
 	"bootfailmax=3\0" \
-	"bootretry=300\0" \
+	"bootdelay=" mkstring_(CONFIG_BOOTDELAY) "\0" \
+	"bootretry=" mkstring_(CONFIG_BOOT_RETRY_TIME) "\0" \
 	"autoboot=yes\0" \
 	"lastbootfailed=no\0" \
 	"upgradeinprogress=no\0" \
@@ -178,11 +197,6 @@
 #define CONFIG_AUTO_COMPLETE
 #define CONFIG_SYS_CBSIZE              256
 
-/* Command timeout, 5 minutes by default, min 10 sec if set */
-#define CONFIG_BOOT_RETRY_TIME         300
-#define CONFIG_BOOT_RETRY_TIME_MIN     10
-#define CONFIG_RESET_TO_RETRY
-
 /* Print Buffer Size */
 #define CONFIG_SYS_PBSIZE (CONFIG_SYS_CBSIZE + sizeof(CONFIG_SYS_PROMPT) + 16)
 #define CONFIG_SYS_MAXARGS             16
@@ -212,7 +226,11 @@
 
 #define CONFIG_ENV_SIZE			(8 * 1024)
 
+#ifdef CONFIG_MANUFACTURING
+#define CONFIG_ENV_IS_NOWHERE
+#else
 #define CONFIG_ENV_IS_IN_MMC
+#endif
 
 #if defined(CONFIG_ENV_IS_IN_MMC)
 #define CONFIG_ENV_OFFSET		(6 * 64 * 1024)

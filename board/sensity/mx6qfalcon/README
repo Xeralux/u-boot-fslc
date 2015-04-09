@@ -8,3 +8,8 @@ Building U-Boot for Falcon:
 
 $ make mx6qfalcon_config
 $ make
+
+Alternate U-Boot for manufacturing image:
+
+$ make mx6qfalcon_mfg_config
+$ make
