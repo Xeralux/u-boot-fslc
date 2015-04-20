@@ -29,6 +29,8 @@
 #include <watchdog.h>
 #include <asm/imx-common/mxc_i2c.h>
 #include <i2c.h>
+#include <power/pmic.h>
+#include <power/ltc3676_pmic.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -504,6 +506,33 @@ static void setup_display(void)
 	writel(reg, &iomux->gpr[3]);
 }
 #endif /* CONFIG_VIDEO_IPUV3 */
+
+int power_init_board(void)
+{
+	struct pmic *p;
+
+	power_ltc3676_init(CONFIG_POWER_LTC3676_I2C_BUS);
+	p = pmic_get("LTC3676_PMIC");
+	if (p && !pmic_probe(p)) {
+		u32 val;
+		puts("PMIC:  LTC3676...");
+		pmic_reg_write(p, LTC3676_CLIRQ, 1);
+		/* set SW4 (VDD_ARM) */
+		pmic_reg_write(p, LTC3676_DVB4B, LTC3676_PGOOD_MASK|0x1c);
+		pmic_reg_write(p, LTC3676_DVB4A, 0x1c);
+		/* set SW1 (VDD_SOC) */
+		pmic_reg_write(p, LTC3676_DVB1B, LTC3676_PGOOD_MASK|0x1c);
+		pmic_reg_write(p, LTC3676_DVB1A, 0x1c);
+
+		if (pmic_reg_read(p, LTC3676_PGSTATL, &val)) {
+			puts("[could not read status]\n");
+		} else {
+			printf("PGSTAT=0x%x\n", val);
+		}
+	}
+
+	return 0;
+}
 
 /*
  * Do not overwrite the console
