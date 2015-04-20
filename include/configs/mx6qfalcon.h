@@ -87,6 +87,16 @@
 #define CONFIG_CONS_INDEX              1
 #define CONFIG_BAUDRATE                        115200
 
+/* I2C */
+#define CONFIG_CMD_I2C
+
+/* PMIC */
+#define CONFIG_POWER
+#define CONFIG_POWER_I2C
+#define CONFIG_POWER_LTC3676
+#define CONFIG_POWER_LTC3676_I2C_ADDR 0x3c
+#define CONFIG_POWER_LTC3676_I2C_BUS  0
+
 /* Command definition */
 #include <config_cmd_default.h>
 
