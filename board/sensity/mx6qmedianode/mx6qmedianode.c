@@ -157,6 +157,39 @@ static void force_por(void)
   writel(cause, &src_regs->srsr);
 }
 
+#ifdef CONFIG_FALCON
+int power_init_board(void)
+{
+	static struct {
+		u8 reg;
+		u8 val;
+	} pmic_init[] = {
+		{ 0x0b, 0x3c },
+		{ 0x0a, 0x1c },
+		{ 0x11, 0x3c },
+		{ 0x10, 0x1c }
+	};
+	int ret, i;
+
+	printf("PMIC initialization...");
+	ret = i2c_set_bus_num(0);
+	if (ret < 0) {
+		printf("Setting i2c bus failed\n");
+		return ret;
+	}
+	for (i = 0; i < sizeof(pmic_init)/sizeof(pmic_init[0]); i++) {
+		ret = i2c_write(0x3c, pmic_init[i].reg, 1, &pmic_init[i].val, 1);
+		if (ret < 0) {
+			printf("Error setting PMIC register 0x%x\n",
+			       pmic_init[i].reg);
+			return ret;
+		}
+	}
+	printf("done.\n");
+	return 0;
+}
+#endif
+
 #ifdef CONFIG_FSL_ESDHC
 struct fsl_esdhc_cfg usdhc_cfg[2] = {
 	{USDHC3_BASE_ADDR},
