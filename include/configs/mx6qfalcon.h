@@ -128,6 +128,14 @@
 #define mkstring_(_x) mkstring__(_x)
 #define mkstring__(_x) #_x
 
+#ifdef CONFIG_DDRTEST
+#define DDRTESTDEFS \
+	"loadtest=fatload mmc 0:1 0x907000 ddr-stress-test-mx6dq.bin\0" \
+	"ddrtest=echo Loading DDR stress test...; if run loadtest; then go 0x907000; fi\0"
+#else
+#define DDRTESTDEFS ""
+#endif
+
 #define CONFIG_EXTRA_ENV_SETTINGS \
 	"bootfailcheck=" bootfailcheck__ "\0" \
 	"bootfailcount=0\0" \
@@ -177,7 +185,11 @@
 		"else; " \
 			"echo FAIL: could not load FDT; " \
 		"fi;\0" \
+	DDRTESTDEFS
 
+#ifdef CONFIG_DDRTEST
+#define CONFIG_BOOTCOMMAND "run ddrtest"
+#else
 #define CONFIG_BOOTCOMMAND \
 	"mmc dev ${mmcdev};" \
 	"if env print ethaddr; then " \
@@ -196,6 +208,7 @@
 	"else " \
 		"echo \"mmc rescan failed, skipping auto-boot.\";" \
 	"fi"
+#endif
 
 #define CONFIG_ARP_TIMEOUT     200UL
 
@@ -260,9 +273,11 @@
 /* Framebuffer */
 #define CONFIG_SYS_CONSOLE_IS_IN_ENV
 
-/*watchdog*/
+/*watchdog - disable for DDR tests*/
+#ifndef CONFIG_DDRTEST
 #define CONFIG_HW_WATCHDOG
 #define CONFIG_IMX_WATCHDOG
+#endif
 
 /*i2c*/
 #define CONFIG_SYS_I2C
