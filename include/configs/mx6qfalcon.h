@@ -162,6 +162,7 @@
 		"echo Boot args: ${bootargs}\0" \
 	"loaduimage=ext2load mmc ${mmcdev}:${mmcpart} ${loadaddr} /boot/${uimage}\0" \
 	"loadfdt=ext2load mmc ${mmcdev}:${mmcpart} ${fdt_addr} /boot/${fdt_file}\0" \
+	"defaultfdt=ext2load mmc ${mmcdev}:${mmcpart} ${fdt_addr} /boot/" CONFIG_DEFAULT_FDT_FILE "\0" \
 	"bootauto=if test ${bootfailcheck} = yes -a ${lastbootfailed} = yes; then " \
 			"setexpr bootfailcount ${bootfailcount} + 1;" \
 			"if test ${mmcpart} -eq 2; then setenv mmcpart 3; else setenv mmcpart 2; fi;" \
@@ -182,9 +183,11 @@
 	"mmcboot=echo Booting from mmc ...; " \
 		"if run loadfdt; then " \
 			"bootm ${loadaddr} - ${fdt_addr}; " \
-		"else; " \
+		"else if run defaultfdt; then " \
+		       "bootm ${loadaddr} - ${fdt_addr}; " \
+		"else " \
 			"echo FAIL: could not load FDT; " \
-		"fi;\0" \
+		"fi; fi;\0" \
 	DDRTESTDEFS
 
 #ifdef CONFIG_DDRTEST
