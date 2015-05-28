@@ -852,9 +852,21 @@ static void imximage_set_header(void *ptr, struct stat *sbuf, int ifd,
 	*header_size_ptr = ROUND((sbuf->st_size + imximage_ivt_offset), 4096);
 
 	if (csf_ptr && imximage_csf_size) {
+		imx_header_v2_t *hdr_v2 = &imxhdr->header.hdr_v2;
+		flash_header_v2_t *fhdr_v2 = &hdr_v2->fhdr;
+		FILE *habfp;
 		*csf_ptr = params->ep - imximage_init_loadsize +
 			*header_size_ptr;
 		*header_size_ptr += imximage_csf_size;
+		habfp = fopen("hab_info.txt", "w");
+		if (habfp == NULL) {
+			perror("opening hab_info.txt");
+			return;
+		}
+		fprintf(habfp, "HAB_START_ADDR=0x%x\nHAB_CHECK_SIZE=0x%x\n",
+			(uint32_t)fhdr_v2->self,
+			hdr_v2->boot_data.size - imximage_ivt_offset - imximage_csf_size);
+		fclose(habfp);
 	}
 }
 
