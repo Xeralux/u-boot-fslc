@@ -262,6 +262,7 @@
 
 #if defined(CONFIG_ENV_IS_IN_MMC)
 #define CONFIG_ENV_OFFSET		(6 * 64 * 1024)
+#define CONFIG_ENV_OFFSET_REDUND	(8 * 64 * 1024)
 #endif
 
 #define CONFIG_OF_LIBFDT
