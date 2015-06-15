@@ -491,7 +491,7 @@ int power_init_board(void)
 	p = pmic_get("LTC3676_PMIC");
 	if (p && !pmic_probe(p)) {
 		u32 val;
-		puts("PMIC:  LTC3676...");
+		puts("PMIC:  LTC3676 ");
 		pmic_reg_write(p, LTC3676_CLIRQ, 1);
 		/* set SW4 (VDD_ARM) */
 		pmic_reg_write(p, LTC3676_DVB4B, LTC3676_PGOOD_MASK|0x1c);
@@ -503,7 +503,7 @@ int power_init_board(void)
 		if (pmic_reg_read(p, LTC3676_PGSTATL, &val)) {
 			puts("[could not read status]\n");
 		} else {
-			printf("PGSTAT=0x%x\n", val);
+			printf("[OK]\n", val);
 		}
 	}
 
