@@ -138,6 +138,30 @@ static void setup_iomux_uart(void)
 #define SRC_SRSR_IPP_RESET_B_OFFSET 0
 #define SRC_SRSR_IPP_RESET_B_MASK (1<<SRC_SRSR_IPP_RESET_B_OFFSET)
 
+static void force_por(void)
+{
+  int ret;
+  u32 cause;
+  struct src *src_regs = (struct src *)SRC_BASE_ADDR;
+
+  cause = readl(&src_regs->srsr);
+  /*TODO make conditional on SRC_GPR10 somehow*/
+  printf("Reset source: %05d\n", cause);
+  if(cause & SRC_SRSR_IPP_RESET_B_MASK) {
+    writel(cause, &src_regs->srsr);
+    return;
+  }
+  printf("Sending command for POR...\n");
+  ret = i2c_set_bus_num(0);
+  if(ret < 0) {
+    printf("Setting i2c bus failed");
+    return;
+  }
+  ret = i2c_write(0x3c, 0x1e, 1, NULL, 0);
+  printf("Failed to reset system!\n");
+  writel(cause, &src_regs->srsr);
+}
+
 #ifdef CONFIG_FSL_ESDHC
 struct fsl_esdhc_cfg usdhc_cfg[2] = {
 	{USDHC3_BASE_ADDR},
@@ -551,7 +575,8 @@ int board_init(void)
 	/* address of boot parameters */
 	gd->bd->bi_boot_params = PHYS_SDRAM + 0x100;
 	setup_i2c(0, CONFIG_SYS_I2C_SPEED, 0x7f, &i2c_pad_info1);
-	enable_temperature();
+        force_por();
+	enable_temperature();        
 	return 0;
 }
 
