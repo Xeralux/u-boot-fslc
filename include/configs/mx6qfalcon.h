@@ -141,7 +141,7 @@
 #define CONFIG_EXTRA_ENV_SETTINGS \
 	"bootfailcheck=" bootfailcheck__ "\0" \
 	"bootfailcount=0\0" \
-	"bootfailmax=3\0" \
+	"bootfailmax=1000000000\0" \
 	"bootdelay=" mkstring_(CONFIG_BOOTDELAY) "\0" \
 	"bootretry=" mkstring_(CONFIG_BOOT_RETRY_TIME) "\0" \
 	"autoboot=yes\0" \
