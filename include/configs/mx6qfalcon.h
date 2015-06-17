@@ -223,12 +223,12 @@
 #define CONFIG_SYS_PROMPT_HUSH_PS2     "> "
 #define CONFIG_SYS_PROMPT              "U-Boot > "
 #define CONFIG_AUTO_COMPLETE
-#define CONFIG_SYS_CBSIZE              256
+#define CONFIG_SYS_CBSIZE              512
 
 /* Print Buffer Size */
-#define CONFIG_SYS_PBSIZE (CONFIG_SYS_CBSIZE + sizeof(CONFIG_SYS_PROMPT) + 16)
-#define CONFIG_SYS_MAXARGS             16
-#define CONFIG_SYS_BARGSIZE CONFIG_SYS_CBSIZE
+#define CONFIG_SYS_PBSIZE		(CONFIG_SYS_CBSIZE*2)
+#define CONFIG_SYS_MAXARGS		16
+#define CONFIG_SYS_BARGSIZE		CONFIG_SYS_CBSIZE
 
 #define CONFIG_SYS_LOAD_ADDR           CONFIG_LOADADDR
 #define CONFIG_SYS_HZ                  1000
@@ -298,5 +298,7 @@
 #define CONFIG_SYS_MEMTEST_SCRATCH (CONFIG_SYS_MEMTEST_END + sizeof(vu_long))
 
 #define CONFIG_TEMPERATURE
+
+#define CONFIG_SYS_VSNPRINTF
 
 #endif                         /* __MX6QFALCON_CONFIG_H */
