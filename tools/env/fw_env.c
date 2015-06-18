@@ -1400,10 +1400,15 @@ static int parse_config ()
 	struct stat st;
 
 #if defined(CONFIG_FILE)
+	char *cfgfile = getenv("FW_CONFIG");
+
+	if (cfgfile == NULL)
+		cfgfile = CONFIG_FILE;
+
 	/* Fills in DEVNAME(), ENVSIZE(), DEVESIZE(). Or don't. */
-	if (get_config (CONFIG_FILE)) {
+	if (get_config (cfgfile)) {
 		fprintf (stderr,
-			"Cannot parse config file: %s\n", strerror (errno));
+			 "Cannot parse config file %s: %s\n", cfgfile, strerror (errno));
 		return -1;
 	}
 #else
