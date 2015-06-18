@@ -20,7 +20,11 @@
 #define CONFIG_CONSOLE_DEV		"ttymxc0"
 
 #define CONFIG_MMCROOT_DEV		"/dev/mmcblk"
+#ifdef CONFIG_MANUFACTURING
 #define CONFIG_MMCROOT_DEVNUM		"0"
+#else
+#define CONFIG_MMCROOT_DEVNUM		"1"
+#endif
 #define CONFIG_MMCROOT_PART		"2"
 #define CONFIG_MMCROOT			CONFIG_MMCROOT_DEV CONFIG_MMCROOT_DEVNUM "p" CONFIG_MMCROOT_PART
 
@@ -153,8 +157,8 @@
 	"console=" CONFIG_CONSOLE_DEV "\0" \
 	"fdt_high=0xffffffff\0"	  \
 	"initrd_high=0xffffffff\0" \
-	"mmcdev=0\0" \
-	"mmcpart=2\0" \
+	"mmcdev=" CONFIG_MMCROOT_DEVNUM "\0" \
+	"mmcpart=" CONFIG_MMCROOT_PART "\0" \
 	"mmcroot=" CONFIG_MMCROOT " rootwait ro\0" \
 	"mmcroot_eval=setenv mmcroot " CONFIG_MMCROOT_DEV "${mmcdev}p${mmcpart} rootwait ro\0" \
 	"mmcargs=test -n ${mmcroot_eval}  &&  run mmcroot_eval; " \
