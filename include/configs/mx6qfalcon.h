@@ -268,4 +268,8 @@
 
 #define CONFIG_SYS_VSNPRINTF
 
+#define CONFIG_CMD_DATE
+#define CONFIG_RTC_ISL1208
+#define CONFIG_SYS_I2C_RTC_ADDR 0x6F
+
 #endif                         /* __MX6QFALCON_CONFIG_H */
