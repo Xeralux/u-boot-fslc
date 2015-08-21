@@ -152,6 +152,7 @@
 	"lastbootfailed=no\0" \
 	"upgradeinprogress=no\0" \
 	"uimage=uImage\0" \
+	"image=zImage\0" \
 	"fdt_file=" CONFIG_DEFAULT_FDT_FILE "\0" \
 	"fdt_addr=0x18000000\0" \
 	"console=" CONFIG_CONSOLE_DEV "\0" \
@@ -167,6 +168,7 @@
 		"root=${mmcroot};" \
 		"echo Boot args: ${bootargs}\0" \
 	"loaduimage=ext2load mmc ${mmcdev}:${mmcpart} ${loadaddr} /boot/${uimage}\0" \
+	"loadimage=ext2load mmc ${mmcdev}:${mmcpart} ${loadaddr} /boot/${image}\0" \
 	"loadfdt=ext2load mmc ${mmcdev}:${mmcpart} ${fdt_addr} /boot/${fdt_file}\0" \
 	"defaultfdt=ext2load mmc ${mmcdev}:${mmcpart} ${fdt_addr} /boot/" CONFIG_DEFAULT_FDT_FILE "\0" \
 	"bootauto=if test ${bootfailcheck} = yes -a ${lastbootfailed} = yes; then " \
@@ -178,6 +180,9 @@
 			"if test ${bootfailcheck} = yes; then setenv lastbootfailed yes; saveenv; fi;" \
 			"if mmc rescan; then " \
 				"run mmcargs;" \
+				"if run loadimage; then " \
+					"run mmcbootz;" \
+				"fi;" \
 				"if run loaduimage; then " \
 					"run mmcboot;" \
 				"fi;" \
@@ -191,6 +196,14 @@
 			"bootm ${loadaddr} - ${fdt_addr}; " \
 		"else if run defaultfdt; then " \
 		       "bootm ${loadaddr} - ${fdt_addr}; " \
+		"else " \
+			"echo FAIL: could not load FDT; " \
+		"fi; fi;\0" \
+	"mmcbootz=echo Booting from mmc ...; " \
+		"if run loadfdt; then " \
+			"bootz ${loadaddr} - ${fdt_addr}; " \
+		"else if run defaultfdt; then " \
+		       "bootz ${loadaddr} - ${fdt_addr}; " \
 		"else " \
 			"echo FAIL: could not load FDT; " \
 		"fi; fi;\0" \
