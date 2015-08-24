@@ -83,17 +83,14 @@
 
 #ifdef CONFIG_MANUFACTURING
 #define CONFIG_BOOT_RETRY_TIME        -1
-#define bootfailcheck__ "no"
 #else
 /* Command timeout, 5 minutes by default, min 10 sec if set */
 #define CONFIG_BOOT_RETRY_TIME         300
-#define bootfailcheck__ "yes"
+#define CONFIG_BOOTCOUNT_ENV
+#define CONFIG_BOOTCOUNT_LIMIT
 #endif
 #define CONFIG_BOOT_RETRY_TIME_MIN     10
 #define CONFIG_RESET_TO_RETRY
-
-#define mkstring_(_x) mkstring__(_x)
-#define mkstring__(_x) #_x
 
 #ifdef CONFIG_DDRTEST
 #define DDRTESTDEFS \
@@ -104,18 +101,13 @@
 #endif
 
 #define CONFIG_EXTRA_ENV_SETTINGS \
-	"bootfailcheck=" bootfailcheck__ "\0" \
-	"bootfailcount=0\0" \
-	"bootfailmax=1000000000\0" \
-	"bootdelay=" mkstring_(CONFIG_BOOTDELAY) "\0" \
-	"bootretry=" mkstring_(CONFIG_BOOT_RETRY_TIME) "\0" \
-	"autoboot=yes\0" \
-	"lastbootfailed=no\0" \
-	"upgradeinprogress=no\0" \
-	"uimage=uImage\0" \
+	"bootcount=0\0" \
+	"upgrade_available=1\0" \
+	"bootlimit=3\0" \
+	"bootretry=" __stringify(CONFIG_BOOT_RETRY_TIME) "\0" \
 	"image=zImage\0" \
-	"fdt_file=" CONFIG_DEFAULT_FDT_FILE "\0" \
-	"fdt_addr=0x18000000\0" \
+	"fdtfile=" CONFIG_DEFAULT_FDT_FILE "\0" \
+	"fdtaddr=0x18000000\0" \
 	"console=" CONFIG_CONSOLE_DEV "\0" \
 	"fdt_high=0xffffffff\0"	  \
 	"initrd_high=0xffffffff\0" \
@@ -123,74 +115,40 @@
 	"mmcpart=" CONFIG_MMCROOT_PART "\0" \
 	"mmcroot=" CONFIG_MMCROOT " rootwait ro\0" \
 	"mmcroot_eval=setenv mmcroot " CONFIG_MMCROOT_DEV "${mmcdev}p${mmcpart} rootwait ro\0" \
+	"mmcpart_swap=if test ${mmcpart} -eq 2; then setenv mmcpart 3; else setenv mmcpart 2; fi; setenv bootcount 0; saveenv\0" \
 	"mmcargs=test -n ${mmcroot_eval}  &&  run mmcroot_eval; " \
 		"setenv bootargs console=${console},${baudrate} " \
-		"loglevel=3 " \
+		"loglevel=3 ${extra_bootargs} " \
 		"root=${mmcroot};" \
 		"echo Boot args: ${bootargs}\0" \
-	"loaduimage=ext2load mmc ${mmcdev}:${mmcpart} ${loadaddr} /boot/${uimage}\0" \
 	"loadimage=ext2load mmc ${mmcdev}:${mmcpart} ${loadaddr} /boot/${image}\0" \
-	"loadfdt=ext2load mmc ${mmcdev}:${mmcpart} ${fdt_addr} /boot/${fdt_file}\0" \
-	"defaultfdt=ext2load mmc ${mmcdev}:${mmcpart} ${fdt_addr} /boot/" CONFIG_DEFAULT_FDT_FILE "\0" \
-	"bootauto=if test ${bootfailcheck} = yes -a ${lastbootfailed} = yes; then " \
-			"setexpr bootfailcount ${bootfailcount} + 1;" \
-			"if test ${mmcpart} -eq 2; then setenv mmcpart 3; else setenv mmcpart 2; fi;" \
-			"echo \"Last boot failed (count ${bootfailcount} of ${bootfailmax}), trying partition ${mmcpart}\";" \
-		"fi;" \
-		"if test ${bootfailcheck} != yes -o ${bootfailcount} -lt ${bootfailmax}; then " \
-			"if test ${bootfailcheck} = yes; then setenv lastbootfailed yes; saveenv; fi;" \
-			"if mmc rescan; then " \
-				"run mmcargs;" \
-				"if run loadimage; then " \
-					"run mmcbootz;" \
-				"fi;" \
-				"if run loaduimage; then " \
-					"run mmcboot;" \
-				"fi;" \
-			"fi;" \
-		"else " \
-			"echo \"FAIL: too many boot failures\";" \
-		"fi;" \
-		"echo \"Auto-boot FAILED\";\0" \
+	"loadfdt=ext2load mmc ${mmcdev}:${mmcpart} ${fdtaddr} /boot/${fdtfile}\0" \
+	"defaultfdt=ext2load mmc ${mmcdev}:${mmcpart} ${fdtaddr} /boot/" CONFIG_DEFAULT_FDT_FILE "\0" \
 	"mmcboot=echo Booting from mmc ...; " \
 		"if run loadfdt; then " \
-			"bootz ${loadaddr} - ${fdt_addr}; " \
+			"bootz ${loadaddr} - ${fdtaddr}; " \
 		"else if run defaultfdt; then " \
-		       "bootz ${loadaddr} - ${fdt_addr}; " \
+		       "bootz ${loadaddr} - ${fdtaddr}; " \
 		"else " \
 			"echo FAIL: could not load FDT; " \
 		"fi; fi;\0" \
-	"mmcbootz=echo Booting from mmc ...; " \
-		"if run loadfdt; then " \
-			"bootz ${loadaddr} - ${fdt_addr}; " \
-		"else if run defaultfdt; then " \
-		       "bootz ${loadaddr} - ${fdt_addr}; " \
-		"else " \
-			"echo FAIL: could not load FDT; " \
-		"fi; fi;\0" \
+	"altbootcmd=run mmcpart_swap; run bootcmd\0" \
 	DDRTESTDEFS
 
 #ifdef CONFIG_DDRTEST
 #define CONFIG_BOOTCOMMAND "run ddrtest"
 #else
-#define CONFIG_BOOTCOMMAND \
-	"mmc dev ${mmcdev};" \
-	"if env print ethaddr; then " \
-		"echo Ethernet address: ${ethaddr}; " \
-	"else " \
-		"echo No Ethernet address set, disabling auto-boot.;" \
-		"setenv autoboot no; saveenv;" \
-	"fi;" \
-	"if mmc rescan; then " \
-		"if test \"${autoboot}\" != \"no\"; then " \
-			"echo \"Auto-booting...\";" \
-			"run bootauto;" \
+#define CONFIG_BOOTCOMMAND "mmc dev ${mmcdev};" \
+		"if mmc rescan; then " \
+			"run mmcargs;" \
+			"if run loadimage; then " \
+				"run mmcboot;" \
+			"else " \
+				"echo FAIL: could not find Linux kernel; " \
+			"fi;" \
 		"else " \
-			"echo \"Auto-boot disabled. run bootauto to boot.\";" \
-		"fi;" \
-	"else " \
-		"echo \"mmc rescan failed, skipping auto-boot.\";" \
-	"fi"
+			"echo FAIL: mmc rescan failed;" \
+		"fi"
 #endif
 
 #define CONFIG_ARP_TIMEOUT     200UL
