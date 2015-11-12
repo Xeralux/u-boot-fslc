@@ -89,6 +89,13 @@ iomux_v3_cfg_t const enet_pads[] = {
 	MX6_PAD_ENET_CRS_DV__GPIO1_IO25		| MUX_PAD_CTRL(NO_PAD_CTRL),
 };
 
+iomux_v3_cfg_t const camboard_reset_pads[] = {
+	MX6_PAD_SD1_DAT1__GPIO1_IO17 | MUX_PAD_CTRL(NO_PAD_CTRL), // IMX_CB_RESET_L
+	MX6_PAD_SD1_DAT2__GPIO1_IO19 | MUX_PAD_CTRL(NO_PAD_CTRL), // CPOD_RESET_L
+};
+#define CB_RESET_GPIO IMX_GPIO_NR(1, 17)
+#define CPOD_RESET_GPIO IMX_GPIO_NR(1, 19)
+
 struct i2c_pads_info i2c_pad_info1 = {
         .scl = {
                 .i2c_mode = MX6_PAD_CSI0_DAT9__I2C1_SCL | PC,
@@ -582,6 +589,13 @@ int board_init(void)
 	setup_i2c(0, CONFIG_SYS_I2C_SPEED, 0x7f, &i2c_pad_info1);
         force_por();
 	enable_temperature();        
+
+	gpio_direction_output(CB_RESET_GPIO, 0);
+	gpio_direction_output(CPOD_RESET_GPIO, 0);
+	udelay(500);
+	gpio_set_value(CB_RESET_GPIO, 1);
+	gpio_set_value(CPOD_RESET_GPIO, 1);
+
 	return 0;
 }
 
