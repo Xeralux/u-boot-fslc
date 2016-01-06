@@ -80,9 +80,12 @@
 	"mmcdev="__stringify(CONFIG_SYS_MMC_ENV_DEV)"\0" \
 	"mmcpart=" __stringify(CONFIG_SYS_MMC_IMG_LOAD_PART) "\0" \
 	"mmcroot=" CONFIG_MMCROOT " rootwait rw\0" \
+	"mmcroot_eval=setenv mmcroot " CONFIG_MMCROOT_DEV "${mmcdev}p${mmcpart} rootwait ro\0" \
 	"mmcautodetect=yes\0" \
-	"mmcargs=setenv bootargs console=${console},${baudrate} " \
-		"root=${mmcroot}\0" \
+	"mmcargs=test -n ${mmcroot_eval} && run mmcroot_eval; " \
+		"setenv bootargs console=${console},${baudrate} " \
+		"root=${mmcroot}; " \
+		"echo Boot args: ${bootargs}\0" \
 	"loadimage=ext2load mmc ${mmcdev}:${mmcpart} ${loadaddr} /boot/${image}\0" \
 	"loadfdt=ext2load mmc ${mmcdev}:${mmcpart} ${fdt_addr} /boot/${fdt_file}\0" \
 	"mmcboot=echo Booting from mmc ...; " \
@@ -176,7 +179,10 @@
 #define CONFIG_ENV_OFFSET		(8 * SZ_64K)
 #define CONFIG_SYS_MMC_ENV_DEV		1   /* USDHC2 */
 #define CONFIG_SYS_MMC_ENV_PART		0	/* user area */
-#define CONFIG_MMCROOT			"/dev/mmcblk1p2"  /* USDHC2 */
+#define CONFIG_MMCROOT_DEV		"/dev/mmcblk"
+#define CONFIG_MMCROOT_DEVNUM		"1"
+#define CONFIG_MMCROOT_PART		"1"
+#define CONFIG_MMCROOT			CONFIG_MMCROOT_DEV CONFIG_MMCROOT_DEVNUM "p" CONFIG_MMCROOT_PART
 
 #define CONFIG_OF_LIBFDT
 #define CONFIG_CMD_BOOTZ
