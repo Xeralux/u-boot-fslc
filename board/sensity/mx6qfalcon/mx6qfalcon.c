@@ -539,7 +539,7 @@ int power_init_board(void)
 		if (pmic_reg_read(p, LTC3676_PGSTATL, &val)) {
 			puts("[could not read status]\n");
 		} else {
-			printf("[OK]\n", val);
+			puts("[OK]\n");
 		}
 	}
 
