@@ -14,13 +14,15 @@
  *                "name", the ``name=value'' pairs of one or more
  *                environment variables "name", or the whole
  *                environment if no names are specified.
- *	fw_setenv [ -a key ] name [ value ... ]
+ *	fw_setenv [ -a key ] [-D | [-d] name | name [ value ... ]]
  *		- If a name without any values is given, the variable
  *		  with this name is deleted from the environment;
  *		  otherwise, all "value" arguments are concatenated,
  *		  separated by single blank characters, and the
  *		  resulting string is assigned to the environment
  *		  variable "name"
+ *                -D: reset entire environment to default
+ *                -d name: reset single environment variable to default
  *
  * If '-a key' is specified, the env block is encrypted with AES 128 CBC.
  * The 'key' argument is in the format of 32 hexadecimal numbers (16 bytes
@@ -43,6 +45,8 @@ static int do_printenv;
 static struct option long_options[] = {
 	{"aes", required_argument, NULL, 'a'},
 	{"config", required_argument, NULL, 'c'},
+	{"default", no_argument, NULL, 'd'},
+	{"default-all", no_argument, NULL, 'D'},
 	{"help", no_argument, NULL, 'h'},
 	{"script", required_argument, NULL, 's'},
 	{"noheader", required_argument, NULL, 'n'},
@@ -91,6 +95,8 @@ void usage_setenv(void)
 		" -c, --config         configuration file, default:" CONFIG_FILE "\n"
 #endif
 		" -l, --lock           lock node, default:/var/lock\n"
+		" -d, --default        set variable to default value\n"
+		" -D, --default-all    set all variables to their default values\n"
 		" -s, --script         batch mode to minimize writes\n"
 		"\n"
 		"Examples:\n"
@@ -187,8 +193,9 @@ int parse_setenv_args(int argc, char *argv[])
 	int c;
 
 	parse_common_args(argc, argv);
+	env_opts.op = OP_SET;
 
-	while ((c = getopt_long(argc, argv, "a:c:ns:l:h", long_options, NULL))
+	while ((c = getopt_long(argc, argv, "a:c:ns:l:dDh", long_options, NULL))
 		!= EOF) {
 		switch (c) {
 		case 's':
@@ -199,6 +206,14 @@ int parse_setenv_args(int argc, char *argv[])
 		case 'h':
 		case 'l':
 			/* ignore common options */
+			break;
+		case 'd':
+                        /* default a variable */
+			env_opts.op = OP_DEFAULT;
+			break;
+		case 'D':
+                        /* default entire environment */
+			env_opts.op = OP_DEFAULTALL;
 			break;
 		default: /* '?' */
 			usage_setenv();

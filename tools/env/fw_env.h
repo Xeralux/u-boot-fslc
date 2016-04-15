@@ -57,6 +57,8 @@
 	"bootm"
 #endif
 
+typedef enum { OP_SET, OP_DEFAULT, OP_DEFAULTALL } setenv_op;
+
 struct env_opts {
 #ifdef CONFIG_FILE
 	char *config_file;
@@ -64,6 +66,7 @@ struct env_opts {
 	int aes_flag; /* Is AES encryption used? */
 	uint8_t aes_key[AES_KEY_LENGTH];
 	char *lockname;
+	setenv_op op;
 };
 
 int parse_aes_key(char *key, uint8_t *bin_key);
