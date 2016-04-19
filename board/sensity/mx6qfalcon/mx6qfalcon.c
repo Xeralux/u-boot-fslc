@@ -590,6 +590,7 @@ int board_init(void)
         force_por();
 	enable_temperature();        
 
+	imx_iomux_v3_setup_multiple_pads(camboard_reset_pads, ARRAY_SIZE(camboard_reset_pads));
 	gpio_direction_output(CB_RESET_GPIO, 0);
 	gpio_direction_output(CPOD_RESET_GPIO, 0);
 	udelay(500);
