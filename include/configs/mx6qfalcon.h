@@ -54,9 +54,6 @@
 
 #define CONFIG_SYS_FSL_ESDHC_ADDR      0
 
-#define CONFIG_CMD_PING
-#define CONFIG_CMD_DHCP
-#define CONFIG_CMD_MII
 #define CONFIG_FEC_MXC
 #define CONFIG_MII
 #define IMX_FEC_BASE			ENET_BASE_ADDR
@@ -66,9 +63,6 @@
 
 #define CONFIG_PHYLIB
 #define CONFIG_PHY_MICREL
-
-/* I2C */
-#define CONFIG_CMD_I2C
 
 /* PMIC */
 #define CONFIG_POWER
@@ -155,7 +149,6 @@
 
 /* Miscellaneous configurable options */
 #define CONFIG_SYS_LONGHELP
-#define CONFIG_SYS_HUSH_PARSER
 #define CONFIG_SYS_PROMPT_HUSH_PS2     "> "
 #undef  CONFIG_SYS_PROMPT
 #define CONFIG_SYS_PROMPT              "U-Boot > "
