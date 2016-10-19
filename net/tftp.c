@@ -297,10 +297,10 @@ static void update_block_number(void)
 	if (tftp_cur_block == 0 && tftp_prev_block != 0) {
 		tftp_block_wrap++;
 		tftp_block_wrap_offset += tftp_block_size * TFTP_SEQUENCE_SIZE;
-		timeout_count = 0; /* we've done well, reset the timeout */
 	} else {
 		show_block_marker();
 	}
+	timeout_count = 0;
 }
 
 /* The TFTP get or put is complete */
