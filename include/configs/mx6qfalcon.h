@@ -13,12 +13,6 @@
 #include <asm/imx-common/gpio.h>
 #include <linux/sizes.h>
 
-#ifdef CONFIG_MANUFACTURING
-#define CONFIG_BOOTDELAY               5
-#else
-#define CONFIG_BOOTDELAY               0
-#endif
-
 #include "mx6_common.h"
 
 #define CONFIG_MACH_TYPE	3981
@@ -195,8 +189,6 @@
 #if defined(CONFIG_ENV_IS_IN_MMC)
 #define CONFIG_SYS_MMC_ENV_DEV		1	/* SDHC4 */
 #endif
-
-#define CONFIG_SYS_CONSOLE_IS_IN_ENV
 
 /*watchdog - disable for DDR tests*/
 #ifndef CONFIG_DDRTEST
