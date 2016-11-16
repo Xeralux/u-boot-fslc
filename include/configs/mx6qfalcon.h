@@ -99,6 +99,9 @@
 	"console=" CONFIG_CONSOLE_DEV "\0" \
 	"fdt_high=0xffffffff\0"	  \
 	"initrd_high=0xffffffff\0" \
+	"initrdfile=initrd\0" \
+	"ramdisk_addr_r=0x19000000\0" \
+	"extra_bootargs=loglevel=3\0" \
 	"mmcdev=" CONFIG_MMCROOT_DEVNUM "\0" \
 	"mmcpart=" CONFIG_MMCROOT_PART "\0" \
 	"mmcroot=" CONFIG_MMCROOT " rootwait ro\0" \
@@ -106,17 +109,22 @@
 	"mmcpart_swap=if test ${mmcpart} -eq 2; then setenv mmcpart 3; else setenv mmcpart 2; fi; setenv bootcount 0; saveenv\0" \
 	"mmcargs=test -n ${mmcroot_eval}  &&  run mmcroot_eval; " \
 		"setenv bootargs console=${console},${baudrate} " \
-		"loglevel=3 ${extra_bootargs} " \
-		"root=${mmcroot};" \
+		"root=${mmcroot} ${extra_bootargs}; " \
 		"echo Boot args: ${bootargs}\0" \
 	"loadimage=ext2load mmc ${mmcdev}:${mmcpart} ${loadaddr} /boot/${image}\0" \
 	"loadfdt=ext2load mmc ${mmcdev}:${mmcpart} ${fdtaddr} /boot/${fdtfile}\0" \
+	"loadinitrd=echo Loading initrd at ${ramdisk_addr_r}; if ext2load mmc ${mmcdev}:${mmcpart} ${ramdisk_addr_r} /boot/${initrdfile}; then " \
+			"setenv initrd_addr ${ramdisk_addr_r}; " \
+		"else " \
+			"echo No initrd present - skipping; " \
+			"setenv initrd_addr -; " \
+		"fi;\0" \
 	"defaultfdt=ext2load mmc ${mmcdev}:${mmcpart} ${fdtaddr} /boot/" CONFIG_DEFAULT_FDT_FILE "\0" \
-	"mmcboot=echo Booting from mmc ...; " \
+	"mmcboot=run loadinitrd; echo Booting from mmc ...; " \
 		"if run loadfdt; then " \
-			"bootz ${loadaddr} - ${fdtaddr}; " \
+			"bootz ${loadaddr} ${initrd_addr} ${fdtaddr}; " \
 		"else if run defaultfdt; then " \
-		       "bootz ${loadaddr} - ${fdtaddr}; " \
+		       "bootz ${loadaddr} ${initrd_addr} ${fdtaddr}; " \
 		"else " \
 			"echo FAIL: could not load FDT; " \
 		"fi; fi;\0" \
