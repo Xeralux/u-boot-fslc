@@ -13,12 +13,6 @@
 #include <asm/imx-common/gpio.h>
 #include <linux/sizes.h>
 
-#ifdef CONFIG_MANUFACTURING
-#define CONFIG_BOOTDELAY               5
-#else
-#define CONFIG_BOOTDELAY               0
-#endif
-
 #include "mx6_common.h"
 
 #define CONFIG_MACH_TYPE	3981
