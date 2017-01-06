@@ -30,12 +30,6 @@
 
 #define CONFIG_SECURE_BOOT
 
-#if defined(CONFIG_MX6Q)
-#define CONFIG_DEFAULT_FDT_FILE	"imx6q-sensity_falcon.dtb"
-#else
-#error Unknown configuration for Sensity Falcon board
-#endif
-
 #define PHYS_SDRAM_SIZE		(2u * 1024 * 1024 * 1024)
 
 /* Size of malloc() pool */
